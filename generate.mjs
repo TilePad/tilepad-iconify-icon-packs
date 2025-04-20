@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import {
   downloadNPMPackage,
   IconSet,
@@ -28,6 +28,8 @@ const list = JSON.parse(
 const prefixes = Object.keys(list);
 console.log("Got", prefixes.length, "icon sets");
 
+let icons = [];
+
 async function processIconSet(prefix) {
   // Read file
   const data = JSON.parse(
@@ -36,6 +38,21 @@ async function processIconSet(prefix) {
 
   // Create IconSet
   const iconSet = new IconSet(data);
+
+  const iconInfo = iconSet.info;
+  const id = iconSet.prefix;
+  const author = `${iconInfo.author.name} (${iconInfo.author.url})`;
+
+  icons.push({
+    "id": `com.jacobtread.iconify.${id}`,
+    "name": iconInfo.name,
+    "authors": [
+      ["Jacobtread (Icon Pack)", "Iconify", `${author}`]
+    ],
+    "description": `Iconify ${iconInfo.name} Icon pack`,
+    "repo": "TilePad/tilepad-iconify-icon-packs",
+    "fileName": `com.jacobtread.iconify.${id}.tilepadIcons`,
+  })
 
   const manifest = createManifest(iconSet);
   const outPath = path.join(outDir, iconSet.prefix);
@@ -66,6 +83,8 @@ async function processIconSet(prefix) {
     target: iconsPath,
   });
 
+  await replaceInSvgFiles(iconsPath);
+
   if (!existsSync(distDir)) {
     await mkdir(distDir, { recursive: true });
   }
@@ -88,8 +107,26 @@ if (firstArg) {
     await Promise.all(batch.map((prefix) => processIconSet(prefix)));
   }
 }
+await writeFile("dist/icon-packs.json", JSON.stringify(icons), 'utf-8')
 
-console.log("Done");
+async function replaceInSvgFiles(dirPath) {
+  try {
+    const files = await readdir(dirPath);
+
+    for (const file of files) {
+      if (path.extname(file) === '.svg') {
+        const filePath = path.join(dirPath, file);
+        const content = await readFile(filePath, 'utf8');
+
+        const updatedContent = content.replace(/currentColor/g, '#ffffff');
+        await writeFile(filePath, updatedContent, 'utf8');
+        console.log(`Updated ${file}`);
+      }
+    }
+  } catch (err) {
+    console.error('Error:', err);
+  }
+}
 
 function createManifest(iconSet) {
   const iconInfo = iconSet.info;
