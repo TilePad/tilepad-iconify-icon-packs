@@ -28,7 +28,7 @@ const list = JSON.parse(
 const prefixes = Object.keys(list);
 console.log("Got", prefixes.length, "icon sets");
 
-let icons = [];
+let iconPacksList = [];
 
 async function processIconSet(prefix) {
   // Read file
@@ -43,7 +43,7 @@ async function processIconSet(prefix) {
   const id = iconSet.prefix;
   const author = `${iconInfo.author.name} (${iconInfo.author.url})`;
 
-  icons.push({
+  iconPacksList.push({
     "id": `com.jacobtread.iconify.${id}`,
     "name": iconInfo.name,
     "authors": [
@@ -107,7 +107,7 @@ if (firstArg) {
     await Promise.all(batch.map((prefix) => processIconSet(prefix)));
   }
 }
-await writeFile("dist/icon-packs.json", JSON.stringify(icons), 'utf-8')
+await writeFile("dist/icon-packs.json", JSON.stringify(iconPacksList), 'utf-8')
 
 async function replaceInSvgFiles(dirPath) {
   try {
