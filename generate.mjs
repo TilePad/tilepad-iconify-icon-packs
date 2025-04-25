@@ -65,7 +65,7 @@ async function processIconSet(prefix) {
   }
 
   // Write the manifest file
-  await writeFile(path.join(outPath, "manifest.toml"), manifest);
+  await writeFile(path.join(outPath, "manifest.json"), manifest);
 
   const icons = iconSet.list();
   const iconsJSON = JSON.stringify(
@@ -131,12 +131,17 @@ async function replaceInSvgFiles(dirPath) {
 function createManifest(iconSet) {
   const iconInfo = iconSet.info;
   const id = iconSet.prefix;
-  const author = `${iconInfo.author.name} (${iconInfo.author.url})`;
+  const author = iconInfo.author.name + (
+    iconInfo.author.url ? ` (${iconInfo.author.url})` : ''
+  );
 
-  return `[icons]
-id = "com.jacobtread.iconify.${id}"
-name = "${iconInfo.name}"
-version = "${iconInfo.version ?? "1.0.0"}"
-authors = ["Jacobtread (Icon Pack)", "Iconify", "${author}"]
-description = "Iconify ${iconInfo.name} Icon pack"`;
+  return JSON.stringify({
+    icons: {
+      id: `com.jacobtread.iconify.${id}`,
+      name: iconInfo.name,
+      version: iconInfo.version ?? "1.0.0",
+      authors: ["Jacobtread (Icon Pack)", "Iconify", author],
+      description: `Iconify ${iconInfo.name} Icon pack`,
+    }
+  })
 }
