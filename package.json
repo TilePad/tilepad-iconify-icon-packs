@@ -4,7 +4,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "node generate.mjs"
+    "build": "node generate.mjs",
+    "release": "node release.mjs"
   },
   "author": "",
   "license": "MIT",

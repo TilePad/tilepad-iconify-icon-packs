@@ -1,0 +1,62 @@
+name: Create Icon Packs
+
+on:
+  # Trigger when a tag is pushed for a release
+  push:
+    tags:
+      - "*.*.*" # This will trigger when a tag like v1.0.0 is pushed
+  # Manual trigger for creating an artifact (button in the UI)
+  workflow_dispatch:
+
+permissions:
+  packages: write
+  contents: write
+
+jobs:
+  build:
+    name: Build plugin releases
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the repo for building
+      - uses: actions/checkout@v4
+
+      # Setup rust for cli tools
+      - name: set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+          override: true
+
+      # Setup node for building
+      - name: set up node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20" # or whatever your project uses
+
+      # Install the CLI tool for bundling
+      - name: install tilepad CLI
+        run: cargo install tilepad-cli
+
+      # Install dependencies
+      - name: install dependencies
+        run: npm ci
+
+      # Create all the icon packs
+      - name: run build (creates icon pack files)
+        run: npm run build
+
+      # Create the github release
+      - name: create release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view "${{ github.ref_name }}" || \
+          gh release create "${{ github.ref_name }}" --notes "Automated release for ${{ github.ref_name }}"
+
+      # Upload all the icon packs
+      - name: upload icon packs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: npm run release
